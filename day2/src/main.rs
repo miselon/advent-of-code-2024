@@ -11,8 +11,25 @@ fn main() {
 fn get_amount_of_safe_reports(reports: Vec<Vec<i32>>) -> usize {
 
     reports.into_iter()
-        .filter(|report| is_report_safe(report))
+        .filter(|report| is_report_safe(report) || is_report_safe_with_problem_dampener(report))
         .count()
+}
+
+fn is_report_safe_with_problem_dampener(report: &Vec<i32>) -> bool {
+    
+    for index in 0 .. report.len() {
+
+        let mut dampened_report = report.clone();
+
+        dampened_report.remove(index);
+
+        if is_report_safe(&dampened_report) {
+
+            return true;
+        }
+    }
+
+    false
 }
 
 fn is_report_safe(report: &Vec<i32>) -> bool {
