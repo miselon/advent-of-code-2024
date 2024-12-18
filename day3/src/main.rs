@@ -6,31 +6,62 @@ fn main() {
 
     let instructions = get_instructions();
 
-    println!("All uncorrupted multiplications add up to: {}", get_uncorrupted_multiplications_sum(&instructions));
+	let valid_sorted_instructions = get_valid_sorted_instructions(&instructions);
+
+    println!(
+		"All uncorrupted and toggled multiplications add up to: {}",
+		parse_and_calculate_instructions(valid_sorted_instructions)
+	);
 }
 
-fn get_uncorrupted_multiplications_sum(instructions: &str) -> i32 {
+fn get_valid_sorted_instructions(instructions: &str) -> Vec<&str> {
 
-	let vaild_multiplication_pattern = Regex::new(r"mul\(\d{1,3},\d{1,3}\)").unwrap();
+	let vaild_instructions_pattern = Regex::new(r"do\(\)|don't\(\)|mul\(\d{1,3},\d{1,3}\)").unwrap();
 
-	vaild_multiplication_pattern.captures_iter(instructions)
-		.map(|function_capture| function_capture.get(0))
-		.map(|function_string| parse_multiplication_function(function_string.unwrap().as_str()))
-		.map(|numbers| numbers.0 * numbers.1)
-		.sum()
+	vaild_instructions_pattern.captures_iter(instructions)
+		.map(|function_capture| function_capture.get(0).unwrap().as_str())
+		.collect()
 }
 
-fn parse_multiplication_function(function_string: &str) -> (i32, i32) {
+fn parse_and_calculate_instructions(instructions: Vec<&str>) -> i32 {
 
-	let opening_parenthesis_index = 4;
-	let closing_parenthesis_index = function_string.find(')').unwrap();
+	let mut calculations_enabled = true;
+	let mut sum = 0;
 
-	let some: Vec<i32> = function_string[opening_parenthesis_index .. closing_parenthesis_index]
+	for instruction in instructions {
+
+		if instruction.starts_with("do(") {
+
+			calculations_enabled = true;
+			continue;
+		}
+
+		if instruction.starts_with("don") {
+
+			calculations_enabled = false;
+			continue;
+		}
+
+		if calculations_enabled {
+
+			sum += calculate_multiplication_instruction(instruction);
+		}
+	}
+
+	sum
+}
+
+fn calculate_multiplication_instruction(mul_instruction: &str) -> i32 {
+
+	let opening_paranthesis_index = 3;
+	let closing_paranthesis_index = mul_instruction.find(')').unwrap();
+
+	let values_to_multiply: Vec<i32> = mul_instruction[opening_paranthesis_index+1..closing_paranthesis_index]
 		.split(',')
-		.map(|string| string.parse().unwrap())
+		.map(|string_value| string_value.parse::<i32>().unwrap())
 		.collect();
 
-	(some[0], some[1])
+	values_to_multiply[0] * values_to_multiply[1]
 }
 
 fn get_instructions() -> String {
